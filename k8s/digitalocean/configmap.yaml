@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dast-config
+  namespace: dast-orchestrator
+data:
+  # ZAP Configuration
+  ZAP_HOST: "localhost"
+  ZAP_PORT: "8090"
+  ZAP_PROTO: "http"
+  ZAP_KEY: "do-production-zap-key-2024"
+  
+  # API Configuration
+  HMAC_SECRET: "do-production-hmac-secret-2024"
+  
+  # Database Configuration - DigitalOcean Managed Database
+  DB_RO: |
+    {
+      "username": "dast_user",
+      "password": "PLACEHOLDER",
+      "engine": "mysql",
+      "host": "your-db-cluster-do-user-123456-0.db.ondigitalocean.com",
+      "port": 25060,
+      "dbClusterIdentifier": "dast-production-do"
+    }
+  DB_RW: |
+    {
+      "username": "dast_user",
+      "password": "PLACEHOLDER", 
+      "engine": "mysql",
+      "host": "your-db-cluster-do-user-123456-0.db.ondigitalocean.com",
+      "port": 25060,
+      "dbClusterIdentifier": "dast-production-do"
+    }
+

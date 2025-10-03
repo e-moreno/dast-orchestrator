@@ -1,0 +1,29 @@
+# DigitalOcean Block Storage for MySQL (if using pod database)
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-pvc
+  namespace: dast-orchestrator
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+  storageClassName: do-block-storage  # DigitalOcean Block Storage
+
+---
+# Alternative: DigitalOcean Spaces for backups/logs
+apiVersion: v1
+kind: Secret
+metadata:
+  name: do-spaces-secret
+  namespace: dast-orchestrator
+type: Opaque
+data:
+  # Base64 encoded DigitalOcean Spaces credentials
+  # echo -n "your-spaces-key" | base64
+  SPACES_ACCESS_KEY: eW91ci1zcGFjZXMta2V5
+  # echo -n "your-spaces-secret" | base64  
+  SPACES_SECRET_KEY: eW91ci1zcGFjZXMtc2VjcmV0
+

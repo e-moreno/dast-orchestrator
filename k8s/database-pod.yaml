@@ -1,0 +1,141 @@
+# Optional: MySQL Database Pod (if not using managed service)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dast-mysql
+  namespace: dast-orchestrator
+  labels:
+    app: dast-mysql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dast-mysql
+  template:
+    metadata:
+      labels:
+        app: dast-mysql
+    spec:
+      containers:
+      - name: mysql
+        image: mysql:8.0
+        ports:
+        - containerPort: 3306
+          name: mysql
+        env:
+        - name: MYSQL_DATABASE
+          value: "dastapi"
+        - name: MYSQL_USER
+          value: "dast_user"
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: dast-secrets
+              key: DB_PASSWORD
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: dast-secrets
+              key: DB_PASSWORD
+        volumeMounts:
+        - name: mysql-storage
+          mountPath: /var/lib/mysql
+        - name: mysql-init
+          mountPath: /docker-entrypoint-initdb.d
+        livenessProbe:
+          exec:
+            command:
+            - mysqladmin
+            - ping
+            - -h
+            - localhost
+            - -u
+            - dast_user
+            - -p$(DB_PASSWORD)
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          exec:
+            command:
+            - mysqladmin
+            - ping
+            - -h
+            - localhost
+            - -u
+            - dast_user
+            - -p$(DB_PASSWORD)
+          initialDelaySeconds: 15
+          periodSeconds: 5
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+      volumes:
+      - name: mysql-storage
+        persistentVolumeClaim:
+          claimName: mysql-pvc
+      - name: mysql-init
+        configMap:
+          name: mysql-init-config
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-pvc
+  namespace: dast-orchestrator
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  # storageClassName: gp2  # Uncomment for AWS EBS
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dast-mysql-service
+  namespace: dast-orchestrator
+  labels:
+    app: dast-mysql
+spec:
+  type: ClusterIP
+  ports:
+  - port: 3306
+    targetPort: 3306
+    protocol: TCP
+    name: mysql
+  selector:
+    app: dast-mysql
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-init-config
+  namespace: dast-orchestrator
+data:
+  init.sql: |
+    -- Add your database initialization SQL here
+    CREATE TABLE IF NOT EXISTS scans (
+      id VARCHAR(255) PRIMARY KEY,
+      target VARCHAR(500) NOT NULL,
+      status VARCHAR(50) NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    );
+    
+    CREATE TABLE IF NOT EXISTS vulnerabilities (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      scan_id VARCHAR(255) NOT NULL,
+      name VARCHAR(255) NOT NULL,
+      severity VARCHAR(50) NOT NULL,
+      description TEXT,
+      FOREIGN KEY (scan_id) REFERENCES scans(id)
+    );
+
