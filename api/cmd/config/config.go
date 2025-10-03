@@ -33,9 +33,9 @@ func New() *Configuration {
 }
 
 func (cfg *Configuration) LoadConfig() error {
-	zapHost := getEnvOrDefault("ZAP_HOST", "zap.prodsec-dev.glovoint.com")
-	zapPort := getEnvOrDefault("ZAP_PORT", "443")
-	zapProto := getEnvOrDefault("ZAP_PROTO", "https")
+	zapHost := getEnvOrDefault("ZAP_HOST", "zap-scanner")
+	zapPort := getEnvOrDefault("ZAP_PORT", "8090")
+	zapProto := getEnvOrDefault("ZAP_PROTO", "http")
 	cfg.ZapURL = fmt.Sprintf("%s://%s:%s", zapProto, zapHost, zapPort)
 
 	zapAPIKey := getEnvOrDefault("ZAP_KEY", "change-me-9203935709")
@@ -44,12 +44,12 @@ func (cfg *Configuration) LoadConfig() error {
 	HMACSecret := getEnvOrDefault("HMAC_SECRET", "736ffa5e4064da13711d075ed6b71069")
 	cfg.HMACSecret = HMACSecret
 
-	dbROEnv := getEnvOrDefault("DB_RO", "{\"username\":\"username\",\"password\":\"password\""+
-		",\"engine\":\"mysql\",\"host\":\"dast-api-dev-dast-api.cluster-ckj8rqyhjfmz.eu-west-1.rds.amazonaws.com\""+
-		",\"port\":3306,\"dbClusterIdentifier\":\"dast-api-dev-dast-api\"}")
-	dbRWEnv := getEnvOrDefault("DB_RW", "{\"username\":\"username\",\"password\":\"password\""+
-		",\"engine\":\"mysql\",\"host\":\"dast-api-dev-dast-api.cluster-ckj8rqyhjfmz.eu-west-1.rds.amazonaws.com\""+
-		",\"port\":3306,\"dbClusterIdentifier\":\"dast-api-dev-dast-api\"}")
+	dbROEnv := getEnvOrDefault("DB_RO", "{\"username\":\"user\",\"password\":\"password\""+
+		",\"engine\":\"mysql\",\"host\":\"dast-db\""+
+		",\"port\":3306,\"dbClusterIdentifier\":\"dastapi\"}")
+	dbRWEnv := getEnvOrDefault("DB_RW", "{\"username\":\"user\",\"password\":\"password\""+
+		",\"engine\":\"mysql\",\"host\":\"dast-db\""+
+		",\"port\":3306,\"dbClusterIdentifier\":\"dastapi\"}")
 
 	var ro RDSCredentials
 	var rw RDSCredentials

@@ -18,9 +18,10 @@ services:
       - "8090"
     healthcheck:
       test: [ "CMD", "wget", "-O", "-",  "http://localhost:8090/JSON/core/view/version/", "--header", "X-ZAP-API-Key: change-me-9203935709" ]
-      interval: 2s
-      timeout: 5s
-      retries: 3
+      interval: 5s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
 
   dast-db:
 
@@ -37,9 +38,10 @@ services:
       - "3306"
     healthcheck:
       test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" , "-u", "user", "-ppassword"]
-      interval: 2s
-      timeout: 5s
-      retries: 3
+      interval: 5s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
 
     networks:
       internal:
@@ -66,8 +68,10 @@ services:
     env_file:
       - local.env
     depends_on:
-      - zap-scanner
-      - dast-db
+      zap-scanner:
+        condition: service_healthy
+      dast-db:
+        condition: service_healthy
 
 volumes:
   my-db:

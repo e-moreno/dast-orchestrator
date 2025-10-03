@@ -11,7 +11,7 @@ from urllib3.exceptions import ReadTimeoutError
 u = str(uuid.uuid4())
 
 target = os.getenv("DAST_API_TARGET", "https://ginandjuice.shop/")
-api_url = os.getenv("DAST_API_URL", "https://dast.prodsec-dev.glovoint.com")
+api_url = os.getenv("DAST_API_URL", "http://localhost:8080")
 secret = os.getenv("DAST_HMAC_SECRET", "")
 application = os.getenv("DAST_TARGET_APP", "dast-api")
 build_id = os.getenv("DAST_BUILD_ID", u)
