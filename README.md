@@ -135,16 +135,46 @@ This spins up:
 ## ✅ Example GitHub Actions Workflow
 
 ```yaml
+name: DAST-Scanner
+
+on:
+  push:
+    branches:
+      - main
+
+    # Don't run for documentation updates or Infra changes
+    paths-ignore:
+      - "**.md"
+      - "infrastructure/"
+      - "deploy/**"
+      - ".github/**"
+      - "local/"
+      - ".gitignore"
+
 jobs:
-  dast-scan:
+  build:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Trigger DAST Scan
+      - name: checkout repo content
+        uses: actions/checkout@v2
+      - name: setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: Install dependencies
         run: |
-          curl -X POST http://your-api/scan \
-          -H "Content-Type: application/json" \
-          -H "X-Signature: ${{ secrets.SCAN_SIGNATURE }}" \
-          -d '{"target":"https://your-app","project":"my-app"}'
+            python -m pip install --upgrade pip
+            if [ -f client/requirements.txt ]; then pip install -r client/requirements.txt; fi
+      - name: Run scanner
+        env:
+          DAST_HMAC_SECRET: ${{ secrets.DAST_HMAC_SECRET }}
+          DAST_API_TARGET: https://ginandjuice.shop/
+          DAST_API_URL: https://dast.prodsec-dev.glovoint.com
+          DAST_TARGET_APP: dast-api
+          DAST_BUILD_ID: ${{ github.sha }}
+        run: |
+          python client/client.py
 ```
 
 ---
