@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dast-config
+  namespace: dast-orchestrator
+data:
+  # ZAP Configuration (non-sensitive)
+  ZAP_HOST: "localhost"
+  ZAP_PORT: "8090"
+  ZAP_PROTO: "http"
+  
+  # Database Configuration (non-sensitive connection details)
+  # Passwords are stored in Secrets
+  DB_RO_HOST: "your-managed-db-host.amazonaws.com"
+  DB_RO_PORT: "3306"
+  DB_RO_USERNAME: "dast_readonly"
+  DB_RO_ENGINE: "mysql"
+  DB_RO_CLUSTER: "dast-production"
+  
+  DB_RW_HOST: "your-managed-db-host.amazonaws.com"
+  DB_RW_PORT: "3306"
+  DB_RW_USERNAME: "dast_user"
+  DB_RW_ENGINE: "mysql"
+  DB_RW_CLUSTER: "dast-production"

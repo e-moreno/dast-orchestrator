@@ -1,0 +1,49 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: dast-api-service
+  namespace: dast-orchestrator
+  labels:
+    app: dast-orchestrator
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8080
+    targetPort: 8080
+    protocol: TCP
+    name: api
+  selector:
+    app: dast-orchestrator
+
+---
+# DigitalOcean LoadBalancer Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: dast-api-loadbalancer
+  namespace: dast-orchestrator
+  labels:
+    app: dast-orchestrator
+  annotations:
+    # DigitalOcean LoadBalancer specific annotations
+    service.beta.kubernetes.io/do-loadbalancer-name: "dast-orchestrator-lb"
+    service.beta.kubernetes.io/do-loadbalancer-protocol: "http"
+    service.beta.kubernetes.io/do-loadbalancer-algorithm: "round_robin"
+    service.beta.kubernetes.io/do-loadbalancer-size: "lb-small"
+    service.beta.kubernetes.io/do-loadbalancer-healthcheck-port: "8080"
+    service.beta.kubernetes.io/do-loadbalancer-healthcheck-path: "/ping"
+    service.beta.kubernetes.io/do-loadbalancer-healthcheck-protocol: "http"
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 8080
+    protocol: TCP
+    name: http
+  - port: 443
+    targetPort: 8080
+    protocol: TCP
+    name: https
+  selector:
+    app: dast-orchestrator
+

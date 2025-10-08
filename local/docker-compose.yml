@@ -1,0 +1,80 @@
+services:
+
+  zap-scanner:
+
+    build:
+      context: ../zap
+      target: app
+
+    networks:
+      internal:
+        aliases:
+          - zap-scanner
+    environment:
+      - ZAP_KEY=change-me-9203935709
+    ports:
+      - "8090:8090"
+    expose:
+      - "8090"
+    healthcheck:
+      test: [ "CMD", "wget", "-O", "-",  "http://localhost:8090/JSON/core/view/version/", "--header", "X-ZAP-API-Key: change-me-9203935709" ]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  dast-db:
+
+    image: mysql:8.0
+    platform: linux/amd64
+    environment:
+      MYSQL_DATABASE: 'dastapi'
+      MYSQL_USER: 'user'
+      MYSQL_PASSWORD: 'password'
+      MYSQL_ROOT_PASSWORD: 'password'
+    ports:
+      - '3306:3306'
+    expose:
+      - "3306"
+    healthcheck:
+      test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" , "-u", "user", "-ppassword"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+    networks:
+      internal:
+        aliases:
+          - dast-db
+
+    volumes:
+      - "./init.sql:/docker-entrypoint-initdb.d/1.sql"
+      - "my-db:/var/lib/mysql"
+
+  dast-api:
+
+    build:
+      context: ../api
+      target: app
+
+    networks:
+      internal:
+        aliases:
+          - dast-api
+    ports:
+      - "8080:8080"
+
+    env_file:
+      - local.env
+    depends_on:
+      zap-scanner:
+        condition: service_healthy
+      dast-db:
+        condition: service_healthy
+
+volumes:
+  my-db:
+
+networks:
+  internal:

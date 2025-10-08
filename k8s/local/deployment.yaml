@@ -1,0 +1,119 @@
+# Simplified deployment for local testing with lower resource requirements
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dast-orchestrator
+  namespace: dast-orchestrator
+  labels:
+    app: dast-orchestrator
+spec:
+  replicas: 1  # Single replica for local testing
+  selector:
+    matchLabels:
+      app: dast-orchestrator
+  template:
+    metadata:
+      labels:
+        app: dast-orchestrator
+    spec:
+      containers:
+      # ZAP Scanner Container
+      - name: zap-scanner
+        image: localhost:5000/zap-scanner:latest  # Local registry
+        ports:
+        - containerPort: 8090
+          name: zap-port
+        env:
+        - name: ZAP_KEY
+          valueFrom:
+            secretKeyRef:
+              name: dast-secrets
+              key: ZAP_KEY
+        livenessProbe:
+          httpGet:
+            path: /JSON/core/view/version/
+            port: 8090
+            httpHeaders:
+            - name: X-ZAP-API-Key
+              value: "local-dev-zap-key-12345"
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /JSON/core/view/version/
+            port: 8090
+            httpHeaders:
+            - name: X-ZAP-API-Key  
+              value: "local-dev-zap-key-12345"
+          initialDelaySeconds: 15
+          periodSeconds: 5
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "200m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+            
+      # DAST API Container  
+      - name: dast-api
+        image: localhost:5000/dast-api:latest  # Local registry
+        ports:
+        - containerPort: 8080
+          name: api-port
+        env:
+        # ZAP Configuration (localhost since same pod)
+        - name: ZAP_HOST
+          value: "localhost"
+        - name: ZAP_PORT
+          value: "8090"
+        - name: ZAP_PROTO
+          value: "http"
+        - name: ZAP_KEY
+          valueFrom:
+            secretKeyRef:
+              name: dast-secrets
+              key: ZAP_KEY
+        # Security
+        - name: HMAC_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: dast-secrets
+              key: HMAC_SECRET
+        # Database Configuration
+        - name: DB_RO
+          valueFrom:
+            configMapKeyRef:
+              name: dast-config
+              key: DB_RO
+        - name: DB_RW
+          valueFrom:
+            configMapKeyRef:
+              name: dast-config
+              key: DB_RW
+        livenessProbe:
+          httpGet:
+            path: /ping
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ping
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 5
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "50m"
+          limits:
+            memory: "256Mi"
+            cpu: "100m"
+      
+      # Security context
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+

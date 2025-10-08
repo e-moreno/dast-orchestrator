@@ -1,0 +1,177 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dast-orchestrator
+  namespace: dast-orchestrator
+  labels:
+    app: dast-orchestrator
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: dast-orchestrator
+  template:
+    metadata:
+      labels:
+        app: dast-orchestrator
+    spec:
+      containers:
+      # ZAP Scanner Container
+      - name: zap-scanner
+        image: your-registry/zap-scanner:latest  # Build from ../zap/Dockerfile
+        ports:
+        - containerPort: 8090
+          name: zap-port
+        env:
+        - name: ZAP_KEY
+          valueFrom:
+            secretKeyRef:
+              name: dast-secrets
+              key: ZAP_KEY
+        livenessProbe:
+          httpGet:
+            path: /JSON/core/view/version/
+            port: 8090
+            httpHeaders:
+            - name: X-ZAP-API-Key
+              value: "$(ZAP_KEY)"
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /JSON/core/view/version/
+            port: 8090
+            httpHeaders:
+            - name: X-ZAP-API-Key  
+              value: "$(ZAP_KEY)"
+          initialDelaySeconds: 15
+          periodSeconds: 5
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "200m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+            
+      # DAST API Container  
+      - name: dast-api
+        image: your-registry/dast-api:latest  # Build from ../api/Dockerfile
+        ports:
+        - containerPort: 8080
+          name: api-port
+        env:
+        # ZAP Configuration (localhost since same pod)
+        - name: ZAP_HOST
+          value: "localhost"
+        - name: ZAP_PORT
+          value: "8090"
+        - name: ZAP_PROTO
+          value: "http"
+        - name: ZAP_KEY
+          valueFrom:
+            secretKeyRef:
+              name: dast-secrets
+              key: ZAP_KEY
+        # Security
+        - name: HMAC_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: dast-secrets
+              key: HMAC_SECRET
+        # Database Configuration (secure approach - separate config and secrets)
+        - name: DB_RO_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: dast-config
+              key: DB_RO_HOST
+        - name: DB_RO_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: dast-config
+              key: DB_RO_PORT
+        - name: DB_RO_USERNAME
+          valueFrom:
+            configMapKeyRef:
+              name: dast-config
+              key: DB_RO_USERNAME
+        - name: DB_RO_ENGINE
+          valueFrom:
+            configMapKeyRef:
+              name: dast-config
+              key: DB_RO_ENGINE
+        - name: DB_RO_CLUSTER
+          valueFrom:
+            configMapKeyRef:
+              name: dast-config
+              key: DB_RO_CLUSTER
+        - name: DB_RO_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: dast-secrets
+              key: DB_RO_PASSWORD
+        - name: DB_RW_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: dast-config
+              key: DB_RW_HOST
+        - name: DB_RW_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: dast-config
+              key: DB_RW_PORT
+        - name: DB_RW_USERNAME
+          valueFrom:
+            configMapKeyRef:
+              name: dast-config
+              key: DB_RW_USERNAME
+        - name: DB_RW_ENGINE
+          valueFrom:
+            configMapKeyRef:
+              name: dast-config
+              key: DB_RW_ENGINE
+        - name: DB_RW_CLUSTER
+          valueFrom:
+            configMapKeyRef:
+              name: dast-config
+              key: DB_RW_CLUSTER
+        - name: DB_RW_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: dast-secrets
+              key: DB_RW_PASSWORD
+        # Construct JSON for the Go app (using environment variable expansion)
+        - name: DB_RO
+          value: '{"username":"$(DB_RO_USERNAME)","password":"$(DB_RO_PASSWORD)","engine":"$(DB_RO_ENGINE)","host":"$(DB_RO_HOST)","port":$(DB_RO_PORT),"dbClusterIdentifier":"$(DB_RO_CLUSTER)"}'
+        - name: DB_RW
+          value: '{"username":"$(DB_RW_USERNAME)","password":"$(DB_RW_PASSWORD)","engine":"$(DB_RW_ENGINE)","host":"$(DB_RW_HOST)","port":$(DB_RW_PORT),"dbClusterIdentifier":"$(DB_RW_CLUSTER)"}'
+        livenessProbe:
+          httpGet:
+            path: /ping
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ping
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 5
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "250m"
+      
+      # Shared volume for temporary files if needed
+      volumes:
+      - name: temp-storage
+        emptyDir: {}
+        
+      # Security context
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
