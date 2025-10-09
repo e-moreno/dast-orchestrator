@@ -29,22 +29,20 @@ spec:
               name: dast-secrets
               key: ZAP_KEY
         livenessProbe:
-          httpGet:
-            path: /JSON/core/view/version/
-            port: 8090
-            httpHeaders:
-            - name: X-ZAP-API-Key
-              value: "$(ZAP_KEY)"
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - 'curl -s -H "X-ZAP-API-Key: $ZAP_KEY" http://localhost:8090/JSON/core/view/version/ > /dev/null'
           initialDelaySeconds: 30
           periodSeconds: 10
         readinessProbe:
-          httpGet:
-            path: /JSON/core/view/version/
-            port: 8090
-            httpHeaders:
-            - name: X-ZAP-API-Key  
-              value: "$(ZAP_KEY)"
-          initialDelaySeconds: 15
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - 'curl -s -H "X-ZAP-API-Key: $ZAP_KEY" http://localhost:8090/JSON/core/view/version/ > /dev/null'
+          initialDelaySeconds: 25
           periodSeconds: 5
         resources:
           requests:
@@ -61,13 +59,22 @@ spec:
         - containerPort: 8080
           name: api-port
         env:
-        # ZAP Configuration (localhost since same pod)
+        # ZAP Configuration (from ConfigMap)
         - name: ZAP_HOST
-          value: "localhost"
+          valueFrom:
+            configMapKeyRef:
+              name: dast-config
+              key: ZAP_HOST
         - name: ZAP_PORT
-          value: "8090"
+          valueFrom:
+            configMapKeyRef:
+              name: dast-config
+              key: ZAP_PORT
         - name: ZAP_PROTO
-          value: "http"
+          valueFrom:
+            configMapKeyRef:
+              name: dast-config
+              key: ZAP_PROTO
         - name: ZAP_KEY
           valueFrom:
             secretKeyRef:
@@ -79,72 +86,49 @@ spec:
             secretKeyRef:
               name: dast-secrets
               key: HMAC_SECRET
-        # Database Configuration (secure approach - separate config and secrets)
-        - name: DB_RO_HOST
+        # Shared Database configuration (from ConfigMap)
+        - name: DB_ENGINE
           valueFrom:
             configMapKeyRef:
               name: dast-config
-              key: DB_RO_HOST
-        - name: DB_RO_PORT
+              key: DB_ENGINE
+        - name: DB_HOST
           valueFrom:
             configMapKeyRef:
               name: dast-config
-              key: DB_RO_PORT
+              key: DB_HOST
+        - name: DB_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: dast-config
+              key: DB_PORT
+        - name: DB_CLUSTER
+          valueFrom:
+            configMapKeyRef:
+              name: dast-config
+              key: DB_CLUSTER
+        # Database RO configuration
         - name: DB_RO_USERNAME
           valueFrom:
             configMapKeyRef:
               name: dast-config
               key: DB_RO_USERNAME
-        - name: DB_RO_ENGINE
-          valueFrom:
-            configMapKeyRef:
-              name: dast-config
-              key: DB_RO_ENGINE
-        - name: DB_RO_CLUSTER
-          valueFrom:
-            configMapKeyRef:
-              name: dast-config
-              key: DB_RO_CLUSTER
         - name: DB_RO_PASSWORD
           valueFrom:
             secretKeyRef:
               name: dast-secrets
               key: DB_RO_PASSWORD
-        - name: DB_RW_HOST
-          valueFrom:
-            configMapKeyRef:
-              name: dast-config
-              key: DB_RW_HOST
-        - name: DB_RW_PORT
-          valueFrom:
-            configMapKeyRef:
-              name: dast-config
-              key: DB_RW_PORT
+        # Database RW configuration
         - name: DB_RW_USERNAME
           valueFrom:
             configMapKeyRef:
               name: dast-config
               key: DB_RW_USERNAME
-        - name: DB_RW_ENGINE
-          valueFrom:
-            configMapKeyRef:
-              name: dast-config
-              key: DB_RW_ENGINE
-        - name: DB_RW_CLUSTER
-          valueFrom:
-            configMapKeyRef:
-              name: dast-config
-              key: DB_RW_CLUSTER
         - name: DB_RW_PASSWORD
           valueFrom:
             secretKeyRef:
               name: dast-secrets
               key: DB_RW_PASSWORD
-        # Construct JSON for the Go app (using environment variable expansion)
-        - name: DB_RO
-          value: '{"username":"$(DB_RO_USERNAME)","password":"$(DB_RO_PASSWORD)","engine":"$(DB_RO_ENGINE)","host":"$(DB_RO_HOST)","port":$(DB_RO_PORT),"dbClusterIdentifier":"$(DB_RO_CLUSTER)"}'
-        - name: DB_RW
-          value: '{"username":"$(DB_RW_USERNAME)","password":"$(DB_RW_PASSWORD)","engine":"$(DB_RW_ENGINE)","host":"$(DB_RW_HOST)","port":$(DB_RW_PORT),"dbClusterIdentifier":"$(DB_RW_CLUSTER)"}'
         livenessProbe:
           httpGet:
             path: /ping

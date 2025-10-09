@@ -9,17 +9,15 @@ data:
   ZAP_PORT: "8090"
   ZAP_PROTO: "http"
   
-  # Database Configuration (non-sensitive connection details)
-  # Passwords are stored in Secrets
-  DB_RO_HOST: "your-db-cluster-do-user-123456-0.db.ondigitalocean.com"
-  DB_RO_PORT: "25060"
-  DB_RO_USERNAME: "dast_readonly"
-  DB_RO_ENGINE: "mysql"
-  DB_RO_CLUSTER: "dast-production-do"
+  # Shared Database Configuration (non-sensitive) - UPDATE THESE VALUES
+  DB_ENGINE: "mysql"
+  DB_HOST: "your-db-cluster-do-user-123456-0.db.ondigitalocean.com"
+  DB_PORT: "25060"
+  DB_CLUSTER: "dast-production-do"
   
-  DB_RW_HOST: "your-db-cluster-do-user-123456-0.db.ondigitalocean.com"
-  DB_RW_PORT: "25060" 
+  # Database RO Configuration (non-sensitive)
+  DB_RO_USERNAME: "dast_readonly"
+  
+  # Database RW Configuration (non-sensitive)  
   DB_RW_USERNAME: "dast_user"
-  DB_RW_ENGINE: "mysql"
-  DB_RW_CLUSTER: "dast-production-do"
 

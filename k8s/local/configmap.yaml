@@ -5,21 +5,18 @@ metadata:
   namespace: dast-orchestrator
 data:
   # ZAP Configuration (non-sensitive)
-  ZAP_HOST: "localhost"
+  ZAP_HOST: "zap"
   ZAP_PORT: "8090"
   ZAP_PROTO: "http"
   
-  # Database Configuration (non-sensitive connection details)
-  # Passwords are stored in Secrets
-  DB_RO_HOST: "db-mysql-ams3-dast-api-do-user-4007095-0.i.db.ondigitalocean.com"
-  DB_RO_PORT: "25060"
-  DB_RO_USERNAME: "dast_readonly"
-  DB_RO_ENGINE: "mysql"
-  DB_RO_CLUSTER: "dastapi"
+  # Shared Database Configuration (non-sensitive)
+  DB_ENGINE: "mysql"
+  DB_HOST: "db-mysql-ams3-dast-api-do-user-4007095-0.i.db.ondigitalocean.com"
+  DB_PORT: "25060"
+  DB_CLUSTER: "dastapi"
   
-  DB_RW_HOST: "db-mysql-ams3-dast-api-do-user-4007095-0.i.db.ondigitalocean.com"
-  DB_RW_PORT: "25060"
+  # Database RO Configuration (non-sensitive)
+  DB_RO_USERNAME: "dast_readonly"
+  
+  # Database RW Configuration (non-sensitive)  
   DB_RW_USERNAME: "dast_user"
-  DB_RW_ENGINE: "mysql"
-  DB_RW_CLUSTER: "dastapi"
-
