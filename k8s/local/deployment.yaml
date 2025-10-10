@@ -24,7 +24,24 @@ spec:
       containers:
       # ZAP Scanner Container
       - name: zap-scanner
-        image: localhost:5000/zap-scanner:latest  # Local registry
+        image: zaproxy/zap-stable:latest  # Official ZAP image
+        command: ["/zap/zap.sh"]
+        args: 
+        - "-daemon"
+        - "-port"
+        - "8090"
+        - "-host"
+        - "0.0.0.0"
+        - "-config"
+        - "api.disablekey=true"
+#        - "-config"
+#        - "api.key=$(ZAP_KEY)"
+        - "-config"
+        - "api.addrs.addr.name=.*"
+        - "-config"
+        - "api.addrs.addr.regex=true"
+        - "-config"
+        - "api.addrs.addr.enabled=true"
         ports:
         - containerPort: 8090
           name: zap-port
@@ -60,7 +77,7 @@ spec:
             
       # DAST API Container  
       - name: dast-api
-        image: localhost:5000/dast-api:latest  # Local registry
+        image: tommoreno/dast-api:1.0.3  # Docker Hub image
         ports:
         - containerPort: 8080
           name: api-port

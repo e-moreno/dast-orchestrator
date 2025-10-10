@@ -62,18 +62,13 @@ else
     fi
 fi
 
-# Build and push images to local registry
-echo "🏗️  Building Docker images..."
+# Using public Docker Hub images (no local build needed)
+echo "🏗️  Using public Docker images..."
 
-echo "📦 Building API image..."
-docker build -t localhost:5000/dast-api:latest ../../api/
-docker push localhost:5000/dast-api:latest
-
-echo "📦 Building ZAP Scanner image..."
-docker build -t localhost:5000/zap-scanner:latest ../../zap/
-docker push localhost:5000/zap-scanner:latest
-
-echo "✅ Images pushed to local registry"
+echo "🐳 Using Docker Hub images..."
+echo "  📦 API: tommoreno/dast-api:1.0.3"
+echo "  📦 ZAP: zaproxy/zap-stable:latest"
+echo "✅ Skipping local build (using public images)"
 
 # Apply Kubernetes manifests
 echo "📦 Creating namespace..."

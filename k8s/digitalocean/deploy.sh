@@ -49,41 +49,20 @@ if [[ ! $REPLY =~ ^[Yy]$ ]]; then
     exit 1
 fi
 
-# Create DigitalOcean Container Registry if not exists
-echo "📦 Setting up DigitalOcean Container Registry..."
-read -p "🤔 Enter your registry name (e.g., my-registry): " REGISTRY_NAME
-if [ -z "$REGISTRY_NAME" ]; then
-    echo "❌ Registry name required."
-    exit 1
-fi
+# Skip registry setup - using Docker Hub images
+echo "📦 Skipping registry setup (using Docker Hub images)..."
 
-# Check if registry exists, create if not
-if ! doctl registry get $REGISTRY_NAME &> /dev/null; then
-    echo "🆕 Creating registry: $REGISTRY_NAME"
-    doctl registry create $REGISTRY_NAME --region nyc3
-fi
+# Using public Docker Hub images (no build needed)
+echo "🏗️  Using public Docker images..."
 
-echo "🔐 Configuring Docker for DigitalOcean Registry..."
-doctl registry login
+echo "🐳 Using Docker Hub images (no build/push needed)..."
+echo "  📦 API: tommoreno/dast-api:1.0.3"
+echo "  📦 ZAP: zaproxy/zap-stable:latest"
 
-# Build and push images
-echo "🏗️  Building and pushing Docker images..."
-REGISTRY_URL="registry.digitalocean.com/$REGISTRY_NAME"
+echo "✅ No build/push needed - using public images from Docker Hub"
 
-echo "📦 Building API image..."
-docker build -t $REGISTRY_URL/dast-api:latest ../../api/
-docker push $REGISTRY_URL/dast-api:latest
-
-echo "📦 Building ZAP Scanner image..."
-docker build -t $REGISTRY_URL/zap-scanner:latest ../../zap/
-docker push $REGISTRY_URL/zap-scanner:latest
-
-echo "✅ Images pushed to DigitalOcean Container Registry"
-
-# Update deployment with correct image URLs
-echo "⚙️  Updating deployment configuration..."
-sed -i.bak "s|your-registry/dast-api:latest|$REGISTRY_URL/dast-api:latest|g" ../deployment.yaml
-sed -i.bak "s|your-registry/zap-scanner:latest|$REGISTRY_URL/zap-scanner:latest|g" ../deployment.yaml
+# No deployment updates needed - using Docker Hub images
+echo "⚙️  Deployment already configured for Docker Hub images..."
 
 # Apply Kubernetes manifests
 echo "📦 Creating namespace..."

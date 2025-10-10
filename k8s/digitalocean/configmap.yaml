@@ -9,15 +9,19 @@ data:
   ZAP_PORT: "8090"
   ZAP_PROTO: "http"
   
-  # Shared Database Configuration (non-sensitive) - UPDATE THESE VALUES
+  # Shared Database Configuration (non-sensitive) 
+  # 🔧 UPDATE THESE VALUES FOR YOUR DIGITALOCEAN DATABASE:
+  # 1. Get connection details from DigitalOcean Control Panel > Databases > Your DB
+  # 2. Use the "Connection Details" section
+  # 3. Replace the placeholder values below
   DB_ENGINE: "mysql"
-  DB_HOST: "your-db-cluster-do-user-123456-0.db.ondigitalocean.com"
-  DB_PORT: "25060"
-  DB_CLUSTER: "dast-production-do"
+  DB_HOST: "your-database-hostname.db.ondigitalocean.com"  # Replace with actual hostname
+  DB_PORT: "25060"                                         # Usually 25060 for DO managed MySQL
+  DB_CLUSTER: "your-database-name"                         # Replace with your database name
   
-  # Database RO Configuration (non-sensitive)
-  DB_RO_USERNAME: "dast_readonly"
+  # Database User Configuration (non-sensitive)
+  DB_RO_USERNAME: "dast_readonly"    # Read-only user
+  DB_RW_USERNAME: "dast_user"        # Read-write user
   
-  # Database RW Configuration (non-sensitive)  
-  DB_RW_USERNAME: "dast_user"
+  # 📝 IMPORTANT: Don't forget to update secrets.yaml with the actual passwords!
 

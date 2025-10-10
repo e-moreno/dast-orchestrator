@@ -18,13 +18,6 @@ func main() {
 	cfg := config.New()
 	log.Println("[MAIN] Configuration loaded successfully")
 
-	log.Println("[MAIN] Connecting to ZAP scanner...")
-	zap, err := zapScanner.NewWithAuth(cfg.ZapURL, cfg.ZapAPIKey)
-	if err != nil {
-		log.Printf("Couldn't connect to zap, error: %v", err)
-	}
-	log.Println("[MAIN] ZAP connection attempt completed")
-
 	log.Println("[MAIN] Connecting to database (RO)...")
 	dbConnRO, err := configDataBase(cfg.DBRO)
 	if err != nil {
@@ -42,6 +35,13 @@ func main() {
 		dbConnRW = nil
 	}
 	log.Println("[MAIN] Database RW connection attempt completed")
+
+	log.Println("[MAIN] Connecting to ZAP scanner...")
+	zap, err := zapScanner.NewWithAuth(cfg.ZapURL, cfg.ZapAPIKey)
+	if err != nil {
+		log.Printf("Couldn't connect to zap, error: %v", err)
+	}
+	log.Println("[MAIN] ZAP connection attempt completed")
 
 	clr := controller.New(cfg, zap, dbConnRO, dbConnRW)
 

@@ -6,7 +6,7 @@ metadata:
   labels:
     app: dast-orchestrator
 spec:
-  replicas: 2
+  replicas: 1  # Start with single replica for cost optimization
   selector:
     matchLabels:
       app: dast-orchestrator
@@ -18,7 +18,22 @@ spec:
       containers:
       # ZAP Scanner Container
       - name: zap-scanner
-        image: your-registry/zap-scanner:latest  # Build from ../zap/Dockerfile
+        image: zaproxy/zap-stable:latest  # Official ZAP image
+        command: ["/zap/zap.sh"]
+        args: 
+        - "-daemon"
+        - "-port"
+        - "8090"
+        - "-host"
+        - "0.0.0.0"
+        - "-config"
+        - "api.disablekey=true"
+        - "-config"
+        - "api.addrs.addr.name=.*"
+        - "-config"
+        - "api.addrs.addr.regex=true"
+        - "-config"
+        - "api.addrs.addr.enabled=true"
         ports:
         - containerPort: 8090
           name: zap-port
@@ -33,28 +48,28 @@ spec:
             command:
             - /bin/sh
             - -c
-            - 'curl -s -H "X-ZAP-API-Key: $ZAP_KEY" http://localhost:8090/JSON/core/view/version/ > /dev/null'
-          initialDelaySeconds: 30
-          periodSeconds: 10
+            - 'curl -s http://localhost:8090/JSON/core/view/version/ > /dev/null'
+          initialDelaySeconds: 15
+          periodSeconds: 3
         readinessProbe:
           exec:
             command:
             - /bin/sh
             - -c
-            - 'curl -s -H "X-ZAP-API-Key: $ZAP_KEY" http://localhost:8090/JSON/core/view/version/ > /dev/null'
-          initialDelaySeconds: 25
-          periodSeconds: 5
+            - 'curl -s http://localhost:8090/JSON/core/view/version/ > /dev/null'
+          initialDelaySeconds: 15
+          periodSeconds: 3
         resources:
           requests:
-            memory: "512Mi"
-            cpu: "200m"
+            memory: "256Mi"      # Reduced for cost optimization
+            cpu: "100m"          # Reduced for cost optimization
           limits:
             memory: "2Gi"
             cpu: "1000m"
             
       # DAST API Container  
       - name: dast-api
-        image: your-registry/dast-api:latest  # Build from ../api/Dockerfile
+        image: tommoreno/dast-api:multiarch  # Multi-architecture image from GitHub Actions
         ports:
         - containerPort: 8080
           name: api-port
@@ -143,11 +158,11 @@ spec:
           periodSeconds: 5
         resources:
           requests:
-            memory: "256Mi"
-            cpu: "100m"
+            memory: "128Mi"      # Reduced for cost optimization
+            cpu: "50m"           # Reduced for cost optimization  
           limits:
-            memory: "512Mi"
-            cpu: "250m"
+            memory: "256Mi"      # Reduced from 512Mi to control costs
+            cpu: "100m"          # Reduced from 250m to control costs
       
       # Shared volume for temporary files if needed
       volumes:

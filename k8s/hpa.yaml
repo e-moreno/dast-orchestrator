@@ -1,4 +1,4 @@
-# HorizontalPodAutoscaler for API scaling
+# HorizontalPodAutoscaler for API scaling (Budget-Friendly)
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
@@ -9,19 +9,32 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: dast-orchestrator
-  minReplicas: 2
-  maxReplicas: 10
+  minReplicas: 1        # Reduced minimum for cost savings
+  maxReplicas: 3        # Limited maximum to prevent budget overruns  
   metrics:
   - type: Resource
     resource:
       name: cpu
       target:
         type: Utilization
-        averageUtilization: 70
+        averageUtilization: 80  # Higher threshold = less scaling
   - type: Resource
     resource:
       name: memory
       target:
         type: Utilization
-        averageUtilization: 80
+        averageUtilization: 85  # Higher threshold = less scaling
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 300    # Wait 5 minutes before scaling up
+      policies:
+      - type: Percent
+        value: 50        # Max 50% increase per scaling event
+        periodSeconds: 60
+    scaleDown:
+      stabilizationWindowSeconds: 600    # Wait 10 minutes before scaling down
+      policies:
+      - type: Percent
+        value: 25        # Max 25% decrease per scaling event  
+        periodSeconds: 60
 
